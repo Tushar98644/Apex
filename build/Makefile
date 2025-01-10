@@ -1,13 +1,15 @@
 # Variables
 CXX = clang++
-CXXFLAGS = -I../include -I../libraries -Wall -Wextra -std=c++17
+CXXFLAGS = -I../include -I/opt/homebrew/Cellar/boost/1.87.0/include -I../libraries -Wall -Wextra -std=c++17
 SRCDIR = ../src
 BINDIR = ../bin
 CMDDIR = ../cmd
 BUILDDIR = ../build
+LDFLAGS = -L/opt/homebrew/Cellar/boost/1.87.0/lib
+LIBS = -lboost_system
 
 # Source files
-SOURCES =$(CMDDIR)/main.cpp $(SRCDIR)/config.cpp
+SOURCES =$(CMDDIR)/main.cpp $(SRCDIR)/config.cpp ${SRCDIR}/websocket_server.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -20,7 +22,7 @@ all: $(EXECUTABLE) clean_executables
 
 # Rule to build the executable
 $(EXECUTABLE): $(OBJECTS) | $(BINDIR)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(EXECUTABLE)
+	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LDFLAGS) $(LIBS) -o $(EXECUTABLE)
 
 # Rule to build object files
 %.o: %.cpp
