@@ -71,7 +71,6 @@ nlohmann::json APIClient::modifyOrder(const std::string &order_id, double new_pr
 nlohmann::json APIClient::getOrderBook(const std::string &instrument_name)
 {
     auto response = sendGetRequest("/api/v2/public/get_order_book?instrument_name=" + instrument_name);
-    std::cout << "API Response from get order book: " << response.dump(4) << "\n";
     return response;
 }
 
