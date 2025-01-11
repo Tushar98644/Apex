@@ -1,16 +1,15 @@
 # Variables
 CXX = clang++
-CXXFLAGS = -I../include -I/opt/homebrew/Cellar/boost/1.87.0/include -I../libraries -Wall -Wextra -std=c++17
+CXXFLAGS = -I../include -I/opt/homebrew/Cellar/boost/1.87.0/include -I/opt/homebrew/Cellar/openssl@3/3.4.0/include -I/opt/homebrew/Cellar/curl/8.11.0_1/include -I../libraries -Wall -Wextra -std=c++17
 SRCDIR = ../src
 BINDIR = ../bin
 CMDDIR = ../cmd
 BUILDDIR = ../build
-LDFLAGS = -L/opt/homebrew/Cellar/boost/1.87.0/lib
-LIBS = -lboost_system
+LDFLAGS = -L/opt/homebrew/Cellar/boost/1.87.0/lib -L/opt/homebrew/Cellar/openssl@3/3.4.0/lib -L/opt/homebrew/Cellar/curl/8.11.0_1/lib
+LIBS = -lboost_system -lssl -lcrypto -lcurl
 
 # Source files
-SOURCES =$(CMDDIR)/main.cpp $(SRCDIR)/config.cpp ${SRCDIR}/websocket_server.cpp
-
+SOURCES = $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(CMDDIR)/*.cpp)
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
 

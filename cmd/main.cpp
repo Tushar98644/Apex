@@ -1,30 +1,64 @@
 #include <iostream>
 #include "config.hpp"
-#include "websocket_server.hpp"
+#include "api_client.hpp"
+#include "order_manager.hpp"
 
-int main() {
+int main()
+{
     Config config;
-    if (!config.load("../config/config.json")) {
+    if (!config.load("../config/config.json"))
+    {
         std::cerr << "Failed to load configuration. Exiting...\n";
         return 1;
     }
 
     std::cout << "Deribit Trading System Initialized Successfully!\n";
-    std::cout << "API Key: " << config.getApiKey() << "\n";
 
-    WebSocketServer wsServer;
-    try {
-        wsServer.start(9002); // Start WebSocket server on port 9002
-        std::cout << "WebSocket server running on port 9002.\n";
-    } catch (const std::exception& e) {
-        std::cerr << "WebSocket server error: " << e.what() << "\n";
-        return 1;
+    APIClient apiClient(config.getClientId(), config.getClientSecret());
+
+    OrderManager orderManager(apiClient);
+
+    try
+    {
+        std::string instrument_name = "BTC-PERPETUAL";
+        std::string type = "limit";
+        double amount = 10.0;
+        double price = 50000.0;
+
+        std::string orderId = orderManager.placeOrder(instrument_name, type, amount, price);
+        if (!orderId.empty())
+        {
+            std::cout << "Order placed successfully. Order ID: " << orderId << "\n";
+
+            auto activeOrders = orderManager.getActiveOrders();
+            std::cout << "Current active orders:\n";
+            for (const auto &[id, order] : activeOrders)
+            {
+                std::cout << "Order ID: " << id << ", Instrument: " << order.instrument_name
+                          << ", Price: " << order.price << ", Amount: " << order.amount << "\n";
+            }
+
+            if (orderManager.cancelOrder(orderId))
+            {
+                std::cout << "Order canceled successfully.\n";
+            }
+            else
+            {
+                std::cout << "Failed to cancel the order.\n";
+            }
+
+            apiClient.getOrderBook("BTC-PERPETUAL");
+            apiClient.getPositions();
+        }
+        else
+        {
+            std::cout << "Failed to place order.\n";
+        }
     }
-
-    std::cout << "Modules not yet implemented.\n";
-
-    // Run the server loop
-    wsServer.run();
+    catch (const std::exception &ex)
+    {
+        std::cerr << "Error during OrderManager operations: " << ex.what() << "\n";
+    }
 
     return 0;
 }

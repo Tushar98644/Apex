@@ -15,7 +15,8 @@ bool Config::load(const std::string& filepath) {
     try {
         json configJson;
         configFile >> configJson;
-        apiKey = configJson.at("api_key").get<std::string>();
+        clientSecret = configJson.at("client_secret").get<std::string>();
+        clientId = configJson.at("client_id").get<std::string>();
     } catch (const std::exception& e) {
         std::cerr << "Error reading configuration: " << e.what() << "\n";
         return false;
@@ -24,6 +25,10 @@ bool Config::load(const std::string& filepath) {
     return true;
 }
 
-std::string Config::getApiKey() const {
-    return apiKey;
+std::string Config::getClientSecret() const {
+    return clientSecret;
+}
+
+std::string Config::getClientId() const {
+    return clientId;
 }

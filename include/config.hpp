@@ -7,10 +7,12 @@ class Config {
 public:
     Config() = default;
     bool load(const std::string& filepath);
-    std::string getApiKey() const;
+    std::string getClientSecret() const;
+    std::string getClientId() const;
 
 private:
-    std::string apiKey; 
+    std::string clientSecret; 
+    std::string clientId;
 };
 
 #endif

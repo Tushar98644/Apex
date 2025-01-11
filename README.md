@@ -10,19 +10,19 @@ deribit_trading_system/
 │   ├── api_client.cpp          # Handles communication with Deribit API
 │   ├── market_data_handler.cpp # Handles market data processing
 │   ├── logger.cpp              # Logging implementation
-│   ├── utils.cpp               # Helper functions (e.g., time measurement, string parsing)
+│   ├── utils.cpp               # Helper functions 
 │   ├── config.cpp              # Configuration loading
-│   └── performance.cpp         # Performance analysis and benchmarking
+│   └── performance.cpp         # Performance analysis 
 │
 ├── include/
-│   ├── order_manager.h         # Header for order management functions
+│   ├── order_manager.h         # Header for order management
 │   ├── websocket_server.h      # Header for WebSocket server
 │   ├── api_client.h            # Header for API client
 │   ├── market_data_handler.h   # Header for market data processing
 │   ├── logger.h                # Logging interface
 │   ├── utils.h                 # Helper function declarations
-│   ├── config.h                # Configuration structure and functions
-│   ├── performance.h           # Performance analysis and benchmarking interface
+│   ├── config.h                # Configuration structure
+│   ├── performance.h           # Performance analysis 
 │   └── common.h                # Common constants and types
 │
 ├── tests/
