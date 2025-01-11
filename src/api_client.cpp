@@ -1,9 +1,14 @@
 #include "api_client.hpp"
 #include <iostream>
 #include <curl/curl.h>
-#include <sstream>
-#include <iomanip>
 #include <string>
+#include <boost/beast/websocket.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/asio.hpp>
+
+namespace beast = boost::beast;
+namespace asio = boost::asio;
+using tcp = boost::asio::ip::tcp;
 
 APIClient::APIClient(const std::string &client_id, const std::string &client_secret)
     : client_id(client_id), client_secret(client_secret)
@@ -130,4 +135,52 @@ nlohmann::json APIClient::sendGetRequest(const std::string &endpoint)
     {
         throw std::runtime_error("Failed to parse JSON: " + std::string(e.what()) + "\nResponse: " + responseStr);
     }
+}
+
+void APIClient::connectToWebSocket(const std::string &url, const std::function<void(const std::string&)> &onMessageCallback) {
+    webSocketRunning = true;
+
+    webSocketThread = std::make_unique<std::thread>([this, url, onMessageCallback]() {
+        try {
+            asio::io_context ioc;
+            tcp::resolver resolver(ioc);
+            beast::websocket::stream<tcp::socket> ws(ioc);
+
+            auto const results = resolver.resolve("test.deribit.com", "443");
+            auto ep = asio::connect(ws.next_layer(), results);
+
+            ws.handshake("test.deribit.com", "/ws/api/v2");
+
+            std::cout << "Connected to WebSocket: " << url << std::endl;
+
+            while (webSocketRunning) {
+                beast::flat_buffer buffer;
+                ws.read(buffer);
+
+                std::string message = beast::buffers_to_string(buffer.data());
+                onMessageCallback(message);
+            }
+
+            ws.close(beast::websocket::close_code::normal);
+        } catch (const std::exception &e) {
+            std::cerr << "WebSocket exception: " << e.what() << std::endl;
+        }
+    });
+}
+
+void APIClient::sendWebSocketMessage(const std::string &message) {
+    if (!webSocketRunning) {
+        throw std::runtime_error("WebSocket is not connected.");
+    }
+
+    // Example placeholder: Implement WebSocket message sending.
+    std::cout << "Sending WebSocket message: " << message << std::endl;
+}
+
+void APIClient::disconnectWebSocket() {
+    webSocketRunning = false;
+    if (webSocketThread && webSocketThread->joinable()) {
+        webSocketThread->join();
+    }
+    std::cout << "WebSocket disconnected." << std::endl;
 }
