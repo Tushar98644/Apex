@@ -20,7 +20,7 @@ void displayMenu() {
     std::cout << "4. Get Orderbook\n";
     std::cout << "5. Get Positions\n";
     std::cout << "6. Exit\n";
-    std::cout << "Enter your choice: ";
+    std::cout << "Enter your choice: \n";
 }
 
 void processOrderbook(WebSocketServer& wsServer, APIClient& apiClient) {
