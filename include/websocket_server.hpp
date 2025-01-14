@@ -3,6 +3,7 @@
 
 #include <boost/beast/websocket.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread/thread.hpp>
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
@@ -21,9 +22,10 @@ public:
     
     void start(uint16_t port);
     void stop();
-    void run(); // New method to keep server running
+    void run();
     bool isRunning() const { return running_; }
     void broadcastOrderbookUpdates(const std::string& symbol, const std::string& data);
+    std::unordered_map<std::string, std::unordered_set<std::shared_ptr<beast::websocket::stream<tcp::socket>>>> getSubscriptions();
 
 private:
     void acceptLoop(uint16_t port);
@@ -33,6 +35,7 @@ private:
     asio::io_context ioc_;
     std::thread serverThread_;
     std::mutex mutex_;
+    boost::asio::thread_pool threadPool_;
     std::unordered_map<std::string, std::unordered_set<std::shared_ptr<beast::websocket::stream<tcp::socket>>>> subscriptions_;
 };
 

@@ -1,10 +1,13 @@
 #include "order_manager.hpp"
+#include "latency_benchmark.hpp"
 #include <iostream>
 
 OrderManager::OrderManager(APIClient& api_client) : api_client(api_client) {}
 
 std::string OrderManager::placeOrder(const std::string& instrument_name, const std::string& type, double amount, double price) {
+    auto start = LatencyBenchmark::start();
     auto response = api_client.placeOrder(instrument_name, type, amount, price);
+    LatencyBenchmark::end(start, "Order Placement Latency");
 
     if (response.contains("result") && response["result"].contains("order") && response["result"]["order"].contains("order_id")) {
         std::string order_id = response["result"]["order"]["order_id"];

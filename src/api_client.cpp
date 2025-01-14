@@ -5,6 +5,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/asio.hpp>
+#include "latency_benchmark.hpp"
 
 namespace beast = boost::beast;
 namespace asio = boost::asio;
@@ -16,18 +17,15 @@ APIClient::APIClient(const std::string &client_id, const std::string &client_sec
     authenticate();
 }
 
-void APIClient::authenticate()
-{
+void APIClient::authenticate() {
     std::string endpoint = "/api/v2/public/auth";
     std::string query = "?grant_type=client_credentials&client_id=" + client_id + "&client_secret=" + client_secret;
+
     auto response = sendGetRequest(endpoint + query);
-    std::cout << "Authentication response: " << response.dump(4) << std::endl;
-    if (response.contains("result") && response["result"].contains("access_token"))
-    {
+
+    if (response.contains("result") && response["result"].contains("access_token")) {
         access_token = response["result"]["access_token"];
-    }
-    else
-    {
+    } else {
         throw std::runtime_error("Authentication failed: " + response.dump());
     }
 }
@@ -43,17 +41,12 @@ nlohmann::json APIClient::placeOrder(const std::string &instrument_name, const s
     }
 
     auto response = sendGetRequest("/api/v2/private/buy" + query);
-
-    std::cout << "API Response from place order: " << response.dump(4) << "\n";
-
     return response;
-
 }
 
 nlohmann::json APIClient::cancelOrder(const std::string &order_id)
 {
     auto response = sendGetRequest("/api/v2/private/cancel?order_id=" + order_id);
-    std::cout << "API Response from cancel order: " << response.dump(4) << "\n";
     return response;
 }
 
@@ -64,13 +57,14 @@ nlohmann::json APIClient::modifyOrder(const std::string &order_id, double new_pr
         "&price=" + std::to_string(new_price) +
         "&amount=" + std::to_string(new_amount);
     auto response = sendGetRequest("/api/v2/private/edit" + query);
-    std::cout << "API Response from modify order: " << response.dump(4) << "\n";
     return response;
 }
 
 nlohmann::json APIClient::getOrderBook(const std::string &instrument_name)
 {
+    auto start = LatencyBenchmark::start();
     auto response = sendGetRequest("/api/v2/public/get_order_book?instrument_name=" + instrument_name);
+    LatencyBenchmark::end(start, "Market Data Processing Latency for " + instrument_name);
     return response;
 }
 
@@ -91,11 +85,9 @@ size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *out
     return totalSize;
 }
 
-nlohmann::json APIClient::sendGetRequest(const std::string &endpoint)
-{
-    CURL *curl = curl_easy_init();
-    if (!curl)
-    {
+nlohmann::json APIClient::sendGetRequest(const std::string &endpoint) {
+    static CURL *curl = curl_easy_init(); // Persistent CURL instance
+    if (!curl) {
         throw std::runtime_error("CURL initialization failed");
     }
 
@@ -106,9 +98,16 @@ nlohmann::json APIClient::sendGetRequest(const std::string &endpoint)
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseStr);
 
+    // Enable persistent connections
+    curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 0L);
+    curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 0L);
+
+    // Use HTTP/2
+    curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+
+    // Token handling
     struct curl_slist *headers = nullptr;
-    if (!access_token.empty())
-    {
+    if (!access_token.empty()) {
         std::string authHeader = "Authorization: Bearer " + access_token;
         headers = curl_slist_append(headers, authHeader.c_str());
     }
@@ -116,22 +115,15 @@ nlohmann::json APIClient::sendGetRequest(const std::string &endpoint)
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
     CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK)
-    {
-        curl_easy_cleanup(curl);
-        curl_slist_free_all(headers);
+    if (res != CURLE_OK) {
         throw std::runtime_error("GET request failed: " + std::string(curl_easy_strerror(res)));
     }
 
-    curl_easy_cleanup(curl);
     curl_slist_free_all(headers);
 
-    try
-    {
+    try {
         return nlohmann::json::parse(responseStr);
-    }
-    catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         throw std::runtime_error("Failed to parse JSON: " + std::string(e.what()) + "\nResponse: " + responseStr);
     }
 }
@@ -146,14 +138,16 @@ void APIClient::connectToWebSocket(const std::string &url, const std::function<v
             beast::websocket::stream<tcp::socket> ws(ioc);
 
             auto const results = resolver.resolve("test.deribit.com", "443");
-            auto ep = asio::connect(ws.next_layer(), results);
+            asio::connect(ws.next_layer(), results);
 
+            ws.set_option(beast::websocket::permessage_deflate());
             ws.handshake("test.deribit.com", "/ws/api/v2");
 
             std::cout << "Connected to WebSocket: " << url << std::endl;
 
+            beast::flat_buffer buffer;
             while (webSocketRunning) {
-                beast::flat_buffer buffer;
+                buffer.consume(buffer.size());
                 ws.read(buffer);
 
                 std::string message = beast::buffers_to_string(buffer.data());
@@ -172,7 +166,6 @@ void APIClient::sendWebSocketMessage(const std::string &message) {
         throw std::runtime_error("WebSocket is not connected.");
     }
 
-    // Example placeholder: Implement WebSocket message sending.
     std::cout << "Sending WebSocket message: " << message << std::endl;
 }
 

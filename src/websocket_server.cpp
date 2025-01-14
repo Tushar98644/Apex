@@ -1,4 +1,5 @@
 #include "websocket_server.hpp"
+#include "latency_benchmark.hpp"
 #include <iostream>
 #include <chrono>
 #include <boost/beast/core/buffers_to_string.hpp>
@@ -29,6 +30,11 @@ void WebSocketServer::run() {
     while (running_) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+}
+
+std::unordered_map<std::string, std::unordered_set<std::shared_ptr<beast::websocket::stream<tcp::socket>>>> WebSocketServer::getSubscriptions() {
+    std::lock_guard<std::mutex> lock(mutex_); 
+    return subscriptions_;
 }
 
 void WebSocketServer::acceptLoop(uint16_t port) {
@@ -106,6 +112,7 @@ void WebSocketServer::handleClient(std::shared_ptr<beast::websocket::stream<tcp:
 }
 
 void WebSocketServer::broadcastOrderbookUpdates(const std::string& symbol, const std::string& data) {
+    auto start = LatencyBenchmark::start();
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = subscriptions_.find(symbol);
     if (it != subscriptions_.end()) {
@@ -123,4 +130,5 @@ void WebSocketServer::broadcastOrderbookUpdates(const std::string& symbol, const
             subscriptions_.erase(it);
         }
     }
+    LatencyBenchmark::end(start, "WebSocket Message Propagation Delay");
 }
