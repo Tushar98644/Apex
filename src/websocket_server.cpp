@@ -24,6 +24,7 @@ void WebSocketServer::stop() {
     if (serverThread_.joinable()) {
         serverThread_.join();
     }
+    threadPool_.join();
 }
 
 void WebSocketServer::run() {
@@ -46,17 +47,18 @@ void WebSocketServer::acceptLoop(uint16_t port) {
             try {
                 tcp::socket socket(ioc_);
                 acceptor.accept(socket);
-                
+
                 auto ws = std::make_shared<beast::websocket::stream<tcp::socket>>(std::move(socket));
                 ws->accept();
-                
-                std::thread([this, ws]() {
+
+                // Submit the client handler to the thread pool
+                boost::asio::post(threadPool_, [this, ws]() {
                     try {
                         handleClient(ws);
                     } catch (const std::exception& e) {
                         std::cerr << "Client handler error: " << e.what() << std::endl;
                     }
-                }).detach();
+                });
             } catch (const std::exception& e) {
                 std::cerr << "Accept iteration error: " << e.what() << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(1));

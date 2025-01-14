@@ -8,7 +8,7 @@ std::mutex LatencyBenchmark::logMutex;
 void LatencyBenchmark::initialize() {
     std::filesystem::path currentPath = std::filesystem::current_path();
     std::filesystem::path rootPath = currentPath.parent_path();
-    logFilePath = (rootPath / "log_metrics.log").string();
+    logFilePath = (rootPath / "logs" / "log_metrics.log").string();
 
     std::ofstream logFile(logFilePath, std::ios::trunc);
     if (!logFile.is_open()) {

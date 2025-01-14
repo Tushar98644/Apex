@@ -43,23 +43,10 @@ Choosing the right data structures allows the system to manage large amounts of 
 ## 4. Thread Management Optimization
 
 ### Approach:
-- **Thread Pooling**: Used a thread pool to manage multiple threads for WebSocket message handling, avoiding the overhead of creating and destroying threads for each incoming connection.
-- **Mutex Optimization**: Replaced global mutexes with finer-grained locks where possible to reduce contention. Critical sections were minimized to avoid unnecessary thread blocking.
+- **Thread Pooling**: The WebSocketServer uses a thread pool to handle client requests. Each incoming WebSocket connection is assigned to a worker thread via boost::asio::post, which optimizes the handling of multiple concurrent client connections.
+-**Separate Threads for Key Operations**: Used separate threads for key operations like order matching,connections and market data processing to ensure that these operations are not blocked by other tasks.
+- **Asynchronous Operations**: Used asynchronous operations wherever possible to avoid blocking threads and improve concurrency.
+- **Mutex Optimization**: mutex locks are applied more granularly, especially around shared resources like subscriptions, to minimize blocking.
 
 ### Justification:
-Using a thread pool avoids the overhead of creating and destroying threads dynamically. Fine-grained locking ensures minimal blocking, allowing multiple threads to work concurrently.
-
----
-<!-- 
-## 5. CPU Optimization
-
-### Objective:
-CPU optimization aims to reduce the computational overhead and ensure that the CPU is used efficiently, minimizing delays in processing orders and market data.
-
-### Approach:
-- **Efficient Algorithm Selection**: Optimized order matching algorithms to reduce unnecessary comparisons.
-- **Profiling and Hotspot Identification**: Used tools like `gprof` and `valgrind` to identify performance bottlenecks in the code and refactor critical areas to improve CPU usage.
-- **Vectorization**: Applied SIMD (Single Instruction, Multiple Data) instructions where applicable to accelerate data processing tasks.
-
-### Justification:
-By optimizing algorithms and identifying CPU bottlenecks, we reduce the time spent in processing orders and market data. SIMD instructions help in utilizing the full capacity of modern processors. -->
+Using thread pooling and dedicated threads for specific tasks (e.g., accepting connections, WebSocket communication) improves concurrency and responsiveness. Fine-grained locking reduces contention, allowing multiple threads to operate simultaneously without unnecessary delays.
