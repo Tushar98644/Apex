@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# config files
+config/config.json
+
 # Compiled Object files
 *.slo
 *.lo
