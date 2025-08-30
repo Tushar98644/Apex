@@ -1,0 +1,3 @@
+[tool.pyright]
+venvPath = "./api_server"
+venv = ".venv"
