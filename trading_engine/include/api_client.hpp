@@ -6,7 +6,8 @@
 #include <thread>
 #include <functional>
 
-class APIClient {
+class APIClient
+{
 public:
     APIClient(const std::string &client_id, const std::string &client_secret);
 
@@ -18,7 +19,7 @@ public:
     nlohmann::json getPositions();
 
     // WebSocket functionality
-    void connectToWebSocket(const std::string &url, const std::function<void(const std::string&)> &onMessageCallback);
+    void connectToWebSocket(const std::string &url, const std::function<void(const std::string &)> &onMessageCallback);
     void sendWebSocketMessage(const std::string &message);
     void disconnectWebSocket();
 

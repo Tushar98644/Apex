@@ -12,18 +12,20 @@ struct Order {
 };
 
 class OrderManager {
+private:
+    APIClient& api_client;
+    std::unordered_map<std::string, Order> active_orders;
+
 public:
     OrderManager(APIClient& api_client);
 
     std::string placeOrder(const std::string& instrument_name, const std::string& type, double amount, double price);
     bool cancelOrder(const std::string& order_id);
     bool modifyOrder(const std::string& order_id, double new_price, double new_amount);
-
     std::unordered_map<std::string, Order> getActiveOrders() const;
 
-private:
-    APIClient& api_client;
-    std::unordered_map<std::string, Order> active_orders;
+    nlohmann::json getOrderBook(const std::string& instrument_name);
+    nlohmann::json getPositions();
 };
 
 #endif

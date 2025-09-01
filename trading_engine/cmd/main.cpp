@@ -182,20 +182,20 @@ int main()
                 std::cout << "Enter instrument name (e.g., BTC-PERPETUAL): ";
                 std::getline(std::cin, symbol);
 
-                std::cout << apiClient.getOrderBook(symbol);
+                std::cout << orderManager.getOrderBook(symbol);
 
                 break;
             }
 
             case 5:
-            { // Get Positions
-                auto positions = apiClient.getPositions();
+            {
+                auto positions = orderManager.getPositions();
                 wsServer.broadcastOrderbookUpdates("positions", positions.dump());
                 std::cout << "Position data sent to WebSocket subscribers.\n";
                 break;
             }
 
-            case 6: // Exit
+            case 6:
                 running = false;
                 break;
 

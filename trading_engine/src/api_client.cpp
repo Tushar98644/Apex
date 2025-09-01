@@ -86,7 +86,7 @@ size_t WriteCallback(void *contents, size_t size, size_t nmemb, std::string *out
 }
 
 nlohmann::json APIClient::sendGetRequest(const std::string &endpoint) {
-    static CURL *curl = curl_easy_init(); // Persistent CURL instance
+    static CURL *curl = curl_easy_init();
     if (!curl) {
         throw std::runtime_error("CURL initialization failed");
     }
@@ -98,14 +98,11 @@ nlohmann::json APIClient::sendGetRequest(const std::string &endpoint) {
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseStr);
 
-    // Enable persistent connections
     curl_easy_setopt(curl, CURLOPT_FORBID_REUSE, 0L);
     curl_easy_setopt(curl, CURLOPT_FRESH_CONNECT, 0L);
 
-    // Use HTTP/2
     curl_easy_setopt(curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
 
-    // Token handling
     struct curl_slist *headers = nullptr;
     if (!access_token.empty()) {
         std::string authHeader = "Authorization: Bearer " + access_token;

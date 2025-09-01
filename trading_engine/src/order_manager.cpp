@@ -42,3 +42,11 @@ bool OrderManager::modifyOrder(const std::string& order_id, double new_price, do
 std::unordered_map<std::string, Order> OrderManager::getActiveOrders() const {
     return active_orders;
 }
+
+nlohmann::json OrderManager::getOrderBook(const std::string& instrument_name) {
+    return api_client.getOrderBook(instrument_name);
+}
+
+nlohmann::json OrderManager::getPositions() {
+    return api_client.getPositions();
+}
